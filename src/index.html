@@ -1,17 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
-  <title>Vanilla JavaScript App</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tank Catalog</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <main>
-    <h1>Vanilla JavaScript App</h1>
-  </main>
-</body>
+  <header>
+    <h1>Tank Catalog</h1>
+  </header>
 
+  <section class="filters">
+    <input type="text" id="searchInput" placeholder="Search by model...">
+
+    <select id="typeFilter">
+      <option value="">All Types</option>
+    </select>
+
+    <select id="roleFilter">
+      <option value="">All Roles</option>
+    </select>
+
+    <select id="countryFilter">
+      <option value="">All Countries</option>
+    </select>
+
+    <select id="manufacturerFilter">
+      <option value="">All Manufacturers</option>
+    </select>
+
+    <select id="generationFilter">
+      <option value="">All Generations</option>
+    </select>
+  </section>
+
+  <section class="table-container">
+    <table id="tankTable">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Type</th>
+          <th>Role</th>
+          <th>Country</th>
+          <th>Manufacturer</th>
+          <th>Generation</th>
+          <th>Weight (t)</th>
+          <th>Speed (km/h)</th>
+          <th>Fire Range (km)</th>
+          <th>Cannon (mm)</th>
+          <th>Engine</th>
+          <th>Crew</th>
+          <th>Unit Price ($M)</th>
+          <th>Date Manufactured</th>
+          <th>Image</th>
+        </tr>
+      </thead>
+      <tbody id="tankTableBody">
+        <!-- Data will be injected by JavaScript -->
+      </tbody>
+    </table>
+  </section>
+
+  <script src="script.js"></script>
+</body>
 </html>
