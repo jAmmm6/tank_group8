@@ -56,6 +56,7 @@ const detailsOverlay = document.getElementById("tankDetailsOverlay");
 const detailsCloseBtn = document.getElementById("detailsCloseBtn");
 const detailsContent = document.getElementById("detailsContent");
 
+detailsOverlay.style.display = "none";
 let tanks = []; // Filled via fetch
 const api = '/data-api/rest/Tank';
 
@@ -104,10 +105,12 @@ function showDetails(tank) {
   const html = buildDetailsHTML(tank);
   detailsContent.innerHTML = html;
   detailsOverlay.hidden = false;
+  detailsOverlay.style.display = "flex";
 }
 
 function hideDetails() {
   detailsOverlay.hidden = true;
+  detailsOverlay.style.display = "none";
   detailsContent.innerHTML = "";
 }
 
@@ -288,6 +291,17 @@ function formatNumber(v) {
   return Number(num.toFixed(2)).toString();
 }
 
+if (detailsCloseBtn) {
+  detailsCloseBtn.addEventListener("click", hideDetails);
+}
+
+detailsOverlay.addEventListener("click", e => {
+  if (e.target === detailsOverlay) hideDetails();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && detailsOverlay.style.display === "flex") hideDetails();
+});
 /* -------- INIT -------- */
 loadTanks();
 
