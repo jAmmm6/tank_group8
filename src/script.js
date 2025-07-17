@@ -37,66 +37,141 @@
   // Add more tank objects if needed
 ];*/
 console.log("Loading tanks...");
+
 const typeFilter = document.getElementById("typeFilter");
 const roleFilter = document.getElementById("roleFilter");
 const countryFilter = document.getElementById("countryFilter");
 const manufacturerFilter = document.getElementById("manufacturerFilter");
-generationFilter = document.getElementById("generationFilter");
+const generationFilter = document.getElementById("generationFilter");
 const searchInput = document.getElementById("searchInput");
 const tankTableBody = document.getElementById("tankTableBody");
 
-let tanks = []; // Will hold data fetched from DB
+// Details modal elements
+const detailsOverlay = document.getElementById("tankDetailsOverlay");
+const detailsCloseBtn = document.getElementById("detailsCloseBtn");
+const detailsContent = document.getElementById("detailsContent");
+
+let tanks = []; // Filled via fetch
 const api = '/data-api/rest/Tank';
+
 async function loadTanks() {
   console.log("→ loadTanks() called");
   try {
-    
     const res = await fetch(api);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    json = await res.json();
+    const json = await res.json();
     tanks = Array.isArray(json) ? json : (json.value || []);
-    console.log("Loading tanks...");
-    console.log(tanks);
+    console.log("Fetched tanks:", tanks);
     populateFilters();
     renderTable(tanks);
   } catch (err) {
     console.error("Error loading tanks:", err);
-    tankTableBody.innerHTML = `<tr><td colspan="15">Failed to load data: ${err.message}</td></tr>`;
+    tankTableBody.innerHTML = `<tr><td colspan="5">Failed to load data: ${err.message}</td></tr>`;
   }
 }
 
+/* -------- TABLE RENDER (reduced cols + Details btn) -------- */
 function renderTable(data) {
-  tankTableBody.innerHTML = data.map(tank => `
-    <tr>
-      <td>${tank.model}</td>
-      <td>${tank.tankType}</td>
-      <td>${tank.tankRole}</td>
-      <td>${tank.country}</td>
-      <td>${tank.manufacturer}</td>
-      <td>${tank.generation}</td>
-      <td>${tank.weight}</td>
-      <td>${tank.speed}</td>
-      <td>${tank.fireRange}</td>
-      <td>${tank.cannon}</td>
-      <td>${tank.engine}</td>
-      <td>${tank.crew}</td>
-      <td>${tank.unitPrice}</td>
-      <td>${tank.dateManufactured}</td>
-      <td><img src="${tank.image}" alt="${tank.model}" /></td>
-    </tr>
-  `).join("");
+  if (!Array.isArray(data) || data.length === 0) {
+    tankTableBody.innerHTML = `<tr><td colspan="5" class="no-data">No tanks found.</td></tr>`;
+    return;
+  }
+
+  tankTableBody.innerHTML = data.map((tank, idx) => {
+    const safeModel = escapeHtml(tank.model);
+    const safeRole = escapeHtml(tank.tankRole);
+    const safeMan = escapeHtml(tank.manufacturer);
+    const safePrice = formatNumber(tank.unitPrice);
+    return `
+      <tr data-index="${idx}">
+        <td>${safeModel}</td>
+        <td>${safeRole}</td>
+        <td>${safeMan}</td>
+        <td>${safePrice}</td>
+        <td><button class="table-details-btn" data-action="details" data-index="${idx}">Details</button></td>
+      </tr>
+    `;
+  }).join("");
 }
 
+/* -------- DETAILS MODAL -------- */
+function showDetails(tank) {
+  const html = buildDetailsHTML(tank);
+  detailsContent.innerHTML = html;
+  detailsOverlay.hidden = false;
+}
+
+function hideDetails() {
+  detailsOverlay.hidden = true;
+  detailsContent.innerHTML = "";
+}
+
+function buildDetailsHTML(t) {
+  // Fallback if fields absent
+  const model = safeField(t.model);
+  const generation = safeField(t.generation);
+  const tankType = safeField(t.tankType);
+  const role = safeField(t.tankRole);
+  const country = safeField(t.country);
+  const manufacturer = safeField(t.manufacturer);
+  const weight = safeField(t.weight);
+  const speed = safeField(t.speed);
+  const fireRange = safeField(t.fireRange);
+  const cannon = safeField(t.cannon);
+  const engine = safeField(t.engine);
+  const crew = safeField(t.crew);
+  const unitPrice = safeField(t.unitPrice);
+  const dateManufactured = safeField(t.dateManufactured);
+  const image = t.image && String(t.image).trim() !== "" ? t.image : null;
+
+  return `
+    <h2>${escapeHtml(model)}</h2>
+    <dl class="details-grid">
+      <dt>Generation</dt><dd>${escapeHtml(generation)}</dd>
+      <dt>Type</dt><dd>${escapeHtml(tankType)}</dd>
+      <dt>Role</dt><dd>${escapeHtml(role)}</dd>
+      <dt>Country</dt><dd>${escapeHtml(country)}</dd>
+      <dt>Manufacturer</dt><dd>${escapeHtml(manufacturer)}</dd>
+      <dt>Weight (t)</dt><dd>${escapeHtml(weight)}</dd>
+      <dt>Speed (km/h)</dt><dd>${escapeHtml(speed)}</dd>
+      <dt>Fire Range (km)</dt><dd>${escapeHtml(fireRange)}</dd>
+      <dt>Cannon (mm)</dt><dd>${escapeHtml(cannon)}</dd>
+      <dt>Engine</dt><dd>${escapeHtml(engine)}</dd>
+      <dt>Crew</dt><dd>${escapeHtml(crew)}</dd>
+      <dt>Unit Price ($M)</dt><dd>${escapeHtml(unitPrice)}</dd>
+      <dt>Date Manufactured</dt><dd>${escapeHtml(dateManufactured)}</dd>
+    </dl>
+    <div class="details-image-wrapper">
+      ${image
+        ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(model)}">`
+        : `<em>No image available</em>`
+      }
+    </div>
+  `;
+}
+
+/* -------- FILTER HELPERS -------- */
 function getUniqueOptions(field) {
-  return [...new Set(tanks.map(t => t[field]))];
+  return [...new Set(tanks.map(t => t[field]).filter(v => v !== null && v !== undefined && v !== ""))].sort();
 }
 
 function populateFilters() {
+  resetSelect(typeFilter);
+  resetSelect(roleFilter);
+  resetSelect(countryFilter);
+  resetSelect(manufacturerFilter);
+  resetSelect(generationFilter);
+
   populateSelect(typeFilter, getUniqueOptions("tankType"));
   populateSelect(roleFilter, getUniqueOptions("tankRole"));
   populateSelect(countryFilter, getUniqueOptions("country"));
   populateSelect(manufacturerFilter, getUniqueOptions("manufacturer"));
   populateSelect(generationFilter, getUniqueOptions("generation"));
+}
+
+function resetSelect(sel) {
+  // Keep the first option (All …), remove the rest
+  while (sel.options.length > 1) sel.remove(1);
 }
 
 function populateSelect(selectElement, options) {
@@ -109,22 +184,104 @@ function populateSelect(selectElement, options) {
 }
 
 function applyFilters() {
-  let filtered = tanks.filter(tank => {
+  const q = searchInput.value.trim().toLowerCase();
+  const filtered = tanks.filter(tank => {
     return (
       (typeFilter.value === "" || tank.tankType === typeFilter.value) &&
       (roleFilter.value === "" || tank.tankRole === roleFilter.value) &&
       (countryFilter.value === "" || tank.country === countryFilter.value) &&
       (manufacturerFilter.value === "" || tank.manufacturer === manufacturerFilter.value) &&
-      (generationFilter.value === "" || tank.generation == generationFilter.value) &&
-      (searchInput.value === "" || tank.model.toLowerCase().includes(searchInput.value.toLowerCase()))
+      (generationFilter.value === "" || String(tank.generation) === generationFilter.value) &&
+      (q === "" || (tank.model && tank.model.toLowerCase().includes(q)))
     );
   });
 
   renderTable(filtered);
 }
 
-document.querySelectorAll("select, input").forEach(el => {
+/* -------- EVENT LISTENERS -------- */
+
+// Filter + search
+document.querySelectorAll(".filters select, .filters input").forEach(el => {
   el.addEventListener("input", applyFilters);
 });
 
+// Details button (event delegation on table)
+tankTableBody.addEventListener("click", e => {
+  const btn = e.target.closest("[data-action='details']");
+  if (!btn) return;
+  const idx = Number(btn.dataset.index);
+  const dataSet = getCurrentlyRenderedData(); // needed because filtered table index !== original index?
+  const tank = dataSet[idx];
+  if (tank) showDetails(tank);
+});
+
+// Close modal
+detailsCloseBtn.addEventListener("click", hideDetails);
+
+// Close when clicking outside modal
+detailsOverlay.addEventListener("click", e => {
+  if (e.target === detailsOverlay) hideDetails();
+});
+
+// ESC key
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !detailsOverlay.hidden) hideDetails();
+});
+
+/* -------- TRACK CURRENTLY RENDERED DATA --------
+   We keep a shallow copy of the array last passed to renderTable()
+   so we can map button row indexes back to tank objects.
+*/
+let _lastRendered = [];
+function renderTable(data) {
+  _lastRendered = Array.isArray(data) ? data : [];
+  if (_lastRendered.length === 0) {
+    tankTableBody.innerHTML = `<tr><td colspan="5" class="no-data">No tanks found.</td></tr>`;
+    return;
+  }
+  tankTableBody.innerHTML = _lastRendered.map((tank, idx) => {
+    const safeModel = escapeHtml(tank.model);
+    const safeRole = escapeHtml(tank.tankRole);
+    const safeMan = escapeHtml(tank.manufacturer);
+    const safePrice = formatNumber(tank.unitPrice);
+    return `
+      <tr data-index="${idx}">
+        <td>${safeModel}</td>
+        <td>${safeRole}</td>
+        <td>${safeMan}</td>
+        <td>${safePrice}</td>
+        <td><button class="table-details-btn" data-action="details" data-index="${idx}">Details</button></td>
+      </tr>
+    `;
+  }).join("");
+}
+function getCurrentlyRenderedData() {
+  return _lastRendered;
+}
+
+/* -------- UTILS -------- */
+function escapeHtml(v) {
+  if (v === null || v === undefined) return "";
+  return String(v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+function escapeAttr(v) {
+  // Good enough for src/alt
+  return escapeHtml(v).replace(/"/g, "&quot;");
+}
+function safeField(v) {
+  return (v === null || v === undefined || v === "") ? "—" : v;
+}
+function formatNumber(v) {
+  if (v === null || v === undefined || v === "") return "—";
+  const num = Number(v);
+  if (Number.isNaN(num)) return escapeHtml(v);
+  // Limit to 2 decimals, strip trailing zeros
+  return Number(num.toFixed(2)).toString();
+}
+
+/* -------- INIT -------- */
 loadTanks();
