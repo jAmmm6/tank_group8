@@ -40,27 +40,25 @@
       <thead>
         <tr>
           <th>Model</th>
-          <th>Type</th>
           <th>Role</th>
-          <th>Country</th>
           <th>Manufacturer</th>
-          <th>Generation</th>
-          <th>Weight (t)</th>
-          <th>Speed (km/h)</th>
-          <th>Fire Range (km)</th>
-          <th>Cannon (mm)</th>
-          <th>Engine</th>
-          <th>Crew</th>
           <th>Unit Price ($M)</th>
-          <th>Date Manufactured</th>
-          <th>Image</th>
+          <th></th> <!-- Details button -->
         </tr>
       </thead>
       <tbody id="tankTableBody">
-        <!-- Data will be injected by JavaScript -->
+        <!-- Data injected by JavaScript -->
       </tbody>
     </table>
   </section>
+
+  <!-- Details Panel / Modal -->
+  <div id="tankDetailsOverlay" class="details-overlay" hidden>
+    <div class="details-modal">
+      <button id="detailsCloseBtn" class="details-close" aria-label="Close details">&times;</button>
+      <div id="detailsContent"><!-- Populated dynamically --></div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
